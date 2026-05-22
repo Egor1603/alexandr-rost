@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Парсит стихи с stihi.ru через Playwright (настоящий браузер).
-Запускается локально и через GitHub Actions.
+Запускается через GitHub Actions и локально.
 
 Локально:
   pip install playwright
@@ -23,8 +23,11 @@ BASE_URL   = "https://stihi.ru"
 # ── Кэш ──────────────────────────────────────────────────────────────────────
 def load_cache() -> dict:
     if CACHE_FILE.exists():
-        items = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
-        return {i["path"]: i for i in items}
+        try:
+            items = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+            return {i["path"]: i for i in items if isinstance(i, dict)}
+        except Exception:
+            pass
     return {}
 
 def save_cache(cache: dict):
@@ -37,14 +40,14 @@ def save_cache(cache: dict):
 def write_poems_js(poems: list):
     lines = [
         "// poems.js — стихотворения Александра Роста",
-        "// Генерируется автоматически. Не редактировать руками.",
+        "// Генерируется автоматически через GitHub Actions.",
         "// Чтобы добавить стихотворение вручную — см. README.md",
         "",
         "const POEMS = [",
     ]
     for p in poems:
-        title = p["title"].replace("\\","\\\\").replace('"','\\"')
-        text  = (p["text"]
+        title = p.get("title", "").replace("\\","\\\\").replace('"','\\"')
+        text  = (p.get("text", "")
                  .replace("\\","\\\\")
                  .replace('"','\\"')
                  .replace("\r","")
@@ -52,38 +55,43 @@ def write_poems_js(poems: list):
         lines.append(f'  {{ date: "{p["date"]}", title: "{title}", text: "{text}" }},')
     lines.append("];")
     POEMS_JS.write_text("\n".join(lines), encoding="utf-8")
-    print(f"✅  poems.js обновлён ({len(poems)} стихотворений)")
+    print(f"✅  poems.js записан ({len(poems)} стихотворений)")
 
-# ── Сбор ссылок со всех страниц автора ───────────────────────────────────────
+# ── Сбор ссылок со страниц автора ────────────────────────────────────────────
 async def collect_links(page) -> list[tuple[str, str]]:
-    """Возвращает [(path, date), ...] в порядке от новых к старым."""
+    """Возвращает [(path, date), ...] новые первые."""
+    seen  = set()
     links = []
     offset = 0
+
     while True:
         url = AUTHOR_URL if offset == 0 else f"{AUTHOR_URL}&s={offset}"
-        await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-        await page.wait_for_timeout(1000)
+        print(f"  Страница: {url}")
+        try:
+            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            await page.wait_for_timeout(1500)
+        except Exception as e:
+            print(f"  ⚠ Не удалось загрузить страницу: {e}")
+            break
 
-        # Все ссылки вида /2024/03/26/8975
-        anchors = await page.query_selector_all('a[href^="/20"], a[href^="/201"], a[href^="/202"]')
-        found = 0
-        for a in anchors:
-            href = await a.get_attribute("href")
-            if not href:
+        # Берём HTML и ищем все ссылки на стихи через regex
+        # (надёжнее CSS-селектора при нестандартной разметке stihi.ru)
+        html = await page.content()
+        found_paths = re.findall(r'href="/(20\d\d/\d\d/\d\d/\d+)"', html)
+
+        new_on_page = 0
+        for path in found_paths:
+            if path in seen:
                 continue
-            m = re.match(r"^/(20\d\d/\d\d/\d\d/\d+)$", href)
-            if not m:
-                continue
-            path = m.group(1)
-            # Дата из пути
+            seen.add(path)
             parts = path.split("/")
             date  = f"{parts[2]}.{parts[1]}.{parts[0]}"
-            if (path, date) not in links:
-                links.append((path, date))
-                found += 1
+            links.append((path, date))
+            new_on_page += 1
 
-        print(f"  Страница offset={offset}: +{found} ссылок (всего {len(links)})")
-        if found == 0:
+        print(f"  +{new_on_page} ссылок (всего {len(links)})")
+
+        if new_on_page == 0:
             break
         offset += 50
 
@@ -93,52 +101,52 @@ async def collect_links(page) -> list[tuple[str, str]]:
 async def parse_poem(page, path: str) -> dict:
     url = f"{BASE_URL}/{path}"
     await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-    await page.wait_for_timeout(500)
+    await page.wait_for_timeout(600)
 
-    # Заголовок
+    # Заголовок — тег h1
     h1 = await page.query_selector("h1")
     title = (await h1.inner_text()).strip() if h1 else ""
 
-    # Текст стихотворения
-    # На stihi.ru текст идёт после <em> с именем автора,
-    # до строки с © Copyright. Берём через JavaScript.
+    # Текст стихотворения через JS:
+    # stihi.ru кладёт текст между <em>Автор</em> и © Copyright
     text = await page.evaluate("""() => {
-        // Ищем все текстовые узлы внутри body
-        const body = document.body;
-        const html = body.innerHTML;
+        const html = document.body.innerHTML;
 
-        // Находим позицию после авторской em-ссылки
-        const afterAuthor = html.indexOf('</em>');
-        if (afterAuthor === -1) return '';
-        const afterSlice = html.slice(afterAuthor + 5);
+        // Позиция после первого </em> (это строка с именем автора)
+        const start = html.indexOf('</em>');
+        if (start === -1) return '';
+        let slice = html.slice(start + 5);
 
-        // Находим позицию до копирайта
-        const copy = afterSlice.search(/©\s*(Copyright|Все права)/i);
-        const raw = copy > -1 ? afterSlice.slice(0, copy) : afterSlice.slice(0, 3000);
+        // Обрезаем до копирайта
+        const copyIdx = slice.search(/©/);
+        if (copyIdx > 0) slice = slice.slice(0, copyIdx);
 
-        // Конвертируем br в переносы, убираем теги
+        // Заменяем <br> на перевод строки, убираем все теги
         const div = document.createElement('div');
-        div.innerHTML = raw
-            .replace(/<br\s*\/?>/gi, '\n')
+        div.innerHTML = slice
+            .replace(/<br\\s*\\/?>/gi, '\\n')
             .replace(/<[^>]+>/g, '');
+
         return div.textContent
-            .split('\n')
+            .split('\\n')
             .map(l => l.trim())
-            .join('\n')
-            .replace(/\n{3,}/g, '\n\n')
+            .join('\\n')
+            .replace(/\\n{3,}/g, '\\n\\n')
             .trim();
     }""")
 
     return {"title": title, "text": text or ""}
 
-
-# ── Главная функция ───────────────────────────────────────────────────────────
+# ── Основной поток ────────────────────────────────────────────────────────────
 async def main():
     cache = load_cache()
-    print(f"Кэш: {len(cache)} стихотворений")
+    print(f"Кэш: {len(cache)} стихотворений\n")
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(
+            headless=True,
+            args=["--no-sandbox", "--disable-setuid-sandbox"]
+        )
         ctx = await browser.new_context(
             locale="ru-RU",
             user_agent=(
@@ -146,37 +154,39 @@ async def main():
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/124.0.0.0 Safari/537.36"
             ),
+            viewport={"width": 1280, "height": 800},
         )
         page = await ctx.new_page()
 
-        # 1. Собираем все ссылки
-        print("\n📋  Собираю список стихотворений...")
+        # 1. Собираем список всех стихов
+        print("📋  Собираю список стихотворений...")
         all_links = await collect_links(page)
-        print(f"   Всего ссылок: {len(all_links)}")
+        print(f"\n   Итого ссылок: {len(all_links)}")
 
-        # 2. Загружаем только новые
+        # 2. Загружаем только те, которых нет в кэше
         to_fetch = [(p, d) for p, d in all_links if p not in cache]
-        print(f"   Новых: {len(to_fetch)}\n")
+        print(f"   Нужно загрузить: {len(to_fetch)}\n")
 
         for i, (path, date) in enumerate(to_fetch, 1):
-            print(f"[{i}/{len(to_fetch)}] {path} ... ", end="", flush=True)
+            print(f"[{i}/{len(to_fetch)}] {path} … ", end="", flush=True)
             try:
                 result = await parse_poem(page, path)
                 cache[path] = {"path": path, "date": date, **result}
-                print(f"✓  {result['title'][:55]}")
+                print(f"✓  {result['title'][:55] or '(без названия)'}")
             except Exception as e:
                 cache[path] = {"path": path, "date": date, "title": "", "text": ""}
                 print(f"✗  {e}")
+            # Сохраняем кэш после каждого — устойчиво к прерываниям
             save_cache(cache)
-            await asyncio.sleep(0.8)  # вежливая пауза
+            await asyncio.sleep(0.8)
 
         await browser.close()
 
-    # 3. Пишем poems.js в порядке all_links (новые первые)
+    # 3. Собираем итоговый список в оригинальном порядке (новые первые)
     ordered = [cache[p] for p, _ in all_links if p in cache]
     write_poems_js(ordered)
 
     if not to_fetch:
-        print("Новых стихотворений нет.")
+        print("ℹ️   Новых стихотворений нет — poems.js не изменился.")
 
 asyncio.run(main())
