@@ -308,7 +308,7 @@ section{ padding: 6rem 3rem; }
 .ptext{
   font-family: var(--mono);
   font-size: clamp(.95rem, 1.3vw, 1.05rem);
-  line-height: 1.7;
+  line-height: 1.35;
   color: var(--ink);
   text-shadow:
     0 0 1px rgba(28,23,16,.2),
@@ -507,16 +507,27 @@ function buildList(list) {
     byYear[year].forEach(item => {
       const row = document.createElement('div');
       row.className = 'pr';
-      // Разбиваем текст на строфы по двойному переносу строки
-      const stanzas = (item.text || '')
-        .split(/\n{2,}/)
-        .map(s => {
-          const lines = s.split('\n')
-            .map(l => l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'))
-            .join('<br>');
-          return `<span class="stanza">${lines}</span>`;
-        })
-        .join('');
+
+      const rawText = (item.text || '').trim();
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      let stanzaHtml;
+      if (rawText.includes('\n\n')) {
+        // Есть явные двойные переносы — используем их
+        stanzaHtml = rawText.split(/\n{2,}/)
+          .filter(s => s.trim())
+          .map(s => `<span class="stanza">${s.split('\n').map(esc).join('<br>')}</span>`)
+          .join('');
+      } else {
+        // Только одинарные переносы — группируем каждые 4 строки в строфу
+        const lines = rawText.split('\n').map(esc);
+        const chunks = [];
+        for (let i = 0; i < lines.length; i += 4) {
+          chunks.push(lines.slice(i, i + 4).join('<br>'));
+        }
+        stanzaHtml = chunks.map(c => `<span class="stanza">${c}</span>`).join('');
+      }
+
       row.innerHTML = `
         <div class="pt" onclick="toggle(this.closest('.pr'))">
           <span class="pnum">${String(item.n).padStart(3,'0')}</span>
@@ -525,7 +536,7 @@ function buildList(list) {
           <span class="pplus" aria-hidden="true">+</span>
         </div>
         <div class="pb"><div class="pbi">
-          <div class="ptext">${stanzas}</div>
+          <div class="ptext">${stanzaHtml}</div>
         </div></div>`;
       yg.appendChild(row);
     });
