@@ -325,6 +325,7 @@ section{ padding: 6rem 3rem; }
   margin: .7em 0;
   user-select: none;
 }
+.stanza-gap{ display: block; margin-bottom: .8em; }
 
 /* ─── EMPTY STATE ──────────────────────────────────────────── */
 .empty{
@@ -521,19 +522,25 @@ function buildList(list) {
 
       let stanzaHtml;
       const DIV = '<span class="stanza-div" aria-hidden="true">* * *</span>';
-      if (rawText.includes('\n\n')) {
-        stanzaHtml = rawText.split(/\n{2,}/)
-          .filter(s => s.trim())
-          .map(s => `<span class="stanza">${s.split('\n').map(esc).join('<br>')}</span>`)
-          .join(DIV);
-      } else {
-        const lines = rawText.split('\n').map(esc);
-        const chunks = [];
-        for (let i = 0; i < lines.length; i += 4) {
-          chunks.push(lines.slice(i, i + 4).join('<br>'));
-        }
-        stanzaHtml = chunks.map(c => `<span class="stanza">${c}</span>`).join(DIV);
-      }
+      const stanzas = rawText.includes('\n\n')
+        ? rawText.split(/\n{2,}/).filter(s => s.trim())
+        : (() => {
+            const lines = rawText.split('\n');
+            const chunks = [];
+            for (let i = 0; i < lines.length; i += 4)
+              chunks.push(lines.slice(i, i + 4).join('\n'));
+            return chunks;
+          })();
+
+      stanzaHtml = stanzas.map((s, i) => {
+        const lines = s.split('\n');
+        const isQuatrain = lines.length === 4;
+        const prev = stanzas[i - 1];
+        const prevIsQuatrain = prev && prev.split('\n').length === 4;
+        // Ставим *** перед катреном, если предыдущая строфа тоже катрен
+        const divider = (i > 0 && isQuatrain && prevIsQuatrain) ? DIV : (i > 0 ? '<span class="stanza-gap"></span>' : '');
+        return divider + `<span class="stanza">${lines.map(esc).join('<br>')}</span>`;
+      }).join('');
 
       row.innerHTML = `
         <div class="pt" onclick="toggle(this.closest('.pr'))">
