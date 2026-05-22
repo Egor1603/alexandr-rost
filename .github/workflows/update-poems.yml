@@ -1,1 +1,81 @@
+name: Update Poems & Deploy
 
+on:
+  schedule:
+    - cron: '0 6 * * *'   # каждый день в 09:00 МСК
+  workflow_dispatch:       # запуск вручную из вкладки Actions
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+# ─────────────────────────────────────────────────────────────
+# JOB 1: обновить poems.js
+# ─────────────────────────────────────────────────────────────
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Fetch poems
+        run: python scripts/fetch_poems.py
+
+      - name: Commit poems.js and cache (если изменились)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add poems.js scripts/poems_cache.json
+          if git diff --cached --quiet; then
+            echo "Изменений нет, коммит пропущен."
+          else
+            git commit -m "chore: обновление стихов [skip ci]"
+            git push
+          fi
+
+# ─────────────────────────────────────────────────────────────
+# JOB 2: задеплоить сайт на GitHub Pages
+# ─────────────────────────────────────────────────────────────
+  deploy:
+    needs: fetch
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout (свежий — после возможного коммита из fetch)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Явно перечисляем только нужные файлы
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
