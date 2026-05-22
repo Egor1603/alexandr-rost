@@ -48,6 +48,7 @@ jobs:
             echo "Изменений нет, коммит пропущен."
           else
             git commit -m "chore: обновление стихов [skip ci]"
+            git pull --rebase origin main
             git push
           fi
 
