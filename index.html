@@ -5,97 +5,363 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Александр Рост — Стихи</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script src="poems.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
 :root{
-  --ink:#1a1814;--muted:#8a847e;--faint:#e4e0d8;--bg:#f6f3ed;
-  --dark:#111009;
-  --serif:'Cormorant Garamond',Georgia,serif;
-  --sans:'Jost',sans-serif;
+  --paper:  #f0ead8;   /* пожелтевшая бумага */
+  --paper2: #e8e0c8;   /* чуть темнее — для секций */
+  --ink:    #1c1710;   /* почти чёрный, тёплый */
+  --ink2:   #3a3020;   /* чуть светлее для второстепенного */
+  --faint:  #c8bea8;   /* линейки, разделители */
+  --ribbon: #2a1f0e;   /* очень тёмный — акценты */
+
+  --mono: 'Courier Prime', 'Courier New', monospace;
+  --type: 'Special Elite', 'Courier New', monospace;
 }
-html{font-size:16px;scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);font-family:var(--serif);min-height:100vh;overflow-x:hidden;cursor:none}
 
-.cursor{width:6px;height:6px;background:var(--ink);border-radius:50%;position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-50%);transition:width .2s,height .2s,opacity .2s}
-.cursor.h{width:30px;height:30px;opacity:.12}
+html{ font-size: 16px; scroll-behavior: smooth; }
+body{
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* Лёгкая текстура бумаги через повторяющийся градиент */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgba(180,160,120,.07) 27px,
+      rgba(180,160,120,.07) 28px
+    );
+}
 
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.4rem 4rem;border-bottom:1px solid transparent;transition:background .4s,border-color .4s}
-nav.bg{background:var(--bg);border-color:var(--faint)}
-.nav-name{font-family:var(--sans);font-weight:200;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);text-decoration:none}
-.nav-links{display:flex;gap:2.5rem;list-style:none}
-.nav-links a{font-family:var(--sans);font-weight:300;font-size:.63rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
-.nav-links a:hover{color:var(--ink)}
+/* ─── CURSOR (десктоп) ─────────────────────────────────────── */
+@media(hover:hover){ body{ cursor: none } .cursor{ display: block } }
+.cursor{
+  display: none;
+  width: 2px; height: 18px;
+  background: var(--ink);
+  position: fixed; z-index: 9999; pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity .15s;
+}
+.cursor.h{ opacity: .3; height: 28px; }
 
-#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding:0 4rem 5rem;position:relative;overflow:hidden}
-.hero-bg{font-family:var(--sans);font-weight:200;font-size:clamp(20vw,24vw,30rem);line-height:.82;color:var(--faint);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);user-select:none;letter-spacing:-.04em;pointer-events:none;white-space:nowrap}
-.hero-c{position:relative;z-index:1}
-.eyebrow{font-family:var(--sans);font-weight:200;font-size:.62rem;letter-spacing:.38em;text-transform:uppercase;color:var(--muted);margin-bottom:1.1rem}
-.rule{width:1px;height:68px;background:var(--faint);margin-bottom:1.5rem}
-h1{font-family:var(--serif);font-weight:300;font-size:clamp(3.2rem,8vw,7rem);line-height:.93;letter-spacing:-.02em;margin-bottom:0}
-h1 .fn{display:block}
-h1 .ln{display:block;font-style:italic;color:var(--muted)}
+/* ─── NAV ──────────────────────────────────────────────────── */
+nav{
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.2rem 3rem;
+  border-bottom: 1px solid transparent;
+  transition: background .3s, border-color .3s;
+}
+nav.bg{
+  background: var(--paper);
+  border-color: var(--faint);
+}
+.nav-name{
+  font-family: var(--type);
+  font-size: .85rem;
+  letter-spacing: .12em;
+  color: var(--ink2);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.nav-links{ display: flex; gap: 2.5rem; list-style: none; }
+.nav-links a{
+  font-family: var(--mono);
+  font-size: .7rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink2);
+  text-decoration: none;
+  transition: color .2s;
+}
+.nav-links a:hover{ color: var(--ink); }
 
-section{padding:7rem 4rem}
-.slabel{font-family:var(--sans);font-weight:200;font-size:.6rem;letter-spacing:.38em;text-transform:uppercase;color:var(--muted);margin-bottom:4rem;display:flex;align-items:center;gap:1.5rem}
-.slabel::after{content:'';width:52px;height:1px;background:var(--faint)}
+/* ─── HERO ─────────────────────────────────────────────────── */
+#hero{
+  min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 0 3rem 5rem;
+  position: relative; overflow: hidden;
+}
 
-#about{border-top:1px solid var(--faint)}
-.ag{display:grid;grid-template-columns:1fr 1fr;gap:7rem;align-items:start}
-.city{font-family:var(--sans);font-weight:200;font-size:.6rem;letter-spacing:.35em;text-transform:uppercase;color:var(--muted);margin-bottom:1.1rem}
-.alead{font-family:var(--serif);font-size:clamp(1.5rem,2.4vw,2rem);font-weight:300;line-height:1.45;letter-spacing:-.01em;font-style:italic}
-.atext{font-family:var(--sans);font-weight:300;font-size:.87rem;line-height:1.95;color:var(--muted)}
-.atext p+p{margin-top:1.1rem}
+/* Большой номер листа — как нумерация страниц машинкой */
+.hero-page{
+  font-family: var(--mono);
+  font-size: clamp(22vw, 28vw, 36rem);
+  font-weight: 700;
+  line-height: .82;
+  color: var(--paper2);
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  user-select: none; pointer-events: none;
+  letter-spacing: -.05em;
+  /* имитируем неравномерный удар клавиш */
+  text-shadow:
+    1px 0px 0 rgba(0,0,0,.04),
+    -1px 1px 0 rgba(0,0,0,.03);
+}
 
-#poems{background:var(--dark);border-top:1px solid #222}
-#poems .slabel{color:#4e4b46}
-#poems .slabel::after{background:#252320}
+.hero-c{ position: relative; z-index: 1; }
 
-.filter-bar{display:flex;align-items:center;gap:2rem;margin-bottom:3rem;flex-wrap:wrap}
-.fi{background:transparent;border:none;border-bottom:1px solid #252320;padding:.5rem 0;font-family:var(--sans);font-weight:300;font-size:.76rem;letter-spacing:.1em;color:#c8c3bb;outline:none;width:200px;transition:border-color .2s}
-.fi::placeholder{color:#3a3830}
-.fi:focus{border-color:#5a5650}
-.fc{font-family:var(--sans);font-weight:200;font-size:.58rem;letter-spacing:.22em;color:#3a3830;text-transform:uppercase}
+/* Горизонтальная линия — как граница листа */
+.hero-rule{
+  width: 100%; max-width: 560px;
+  height: 1px;
+  background: var(--faint);
+  margin-bottom: 2rem;
+  position: relative;
+}
+.hero-rule::before{
+  content: attr(data-label);
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--faint);
+  position: absolute;
+  bottom: 6px; right: 0;
+}
 
-.yg{margin-bottom:.5rem}
-.yh{font-family:var(--sans);font-weight:200;font-size:.58rem;letter-spacing:.38em;text-transform:uppercase;color:#3a3830;padding:1.6rem 0 .5rem;border-top:1px solid #1a1814;display:flex;align-items:center;gap:1rem}
-.yh::after{content:'';flex:1;height:1px;background:#1a1814}
+h1{
+  font-family: var(--type);
+  font-weight: 400; /* Special Elite не имеет жирного */
+  font-size: clamp(3.2rem, 9vw, 7.5rem);
+  line-height: .9;
+  letter-spacing: .02em;
+  /* Неравномерная насыщенность букв — главный эффект машинки */
+  text-shadow:
+    0 0 1px rgba(28,23,16,.25),
+    1px 0 0 rgba(28,23,16,.08),
+    0 1px 0 rgba(28,23,16,.05);
+  margin-bottom: 1.8rem;
+}
+h1 .fn{ display: block; }
+h1 .ln{
+  display: block;
+  /* Лёгкое горизонтальное смещение — как поехавшая каретка */
+  margin-left: .12em;
+  opacity: .65;
+}
 
-.pr{border-top:1px solid #1a1814;overflow:hidden}
-.pt{display:flex;align-items:baseline;padding:1.15rem 0;cursor:pointer;user-select:none}
-.pt:hover .ptitle{color:#e0dbd3;letter-spacing:.005em}
-.pr.open .ptitle{color:#e0dbd3}
-.pnum{font-family:var(--sans);font-weight:200;font-size:.56rem;letter-spacing:.15em;color:#333028;width:3.2rem;flex-shrink:0}
-.ptitle{font-family:var(--serif);font-weight:300;font-size:clamp(.95rem,1.8vw,1.4rem);color:#b8b3ab;flex:1;transition:color .3s,letter-spacing .3s}
-.pdate{font-family:var(--sans);font-weight:200;font-size:.56rem;letter-spacing:.12em;color:#333028;margin-left:2rem;flex-shrink:0}
-.pplus{font-family:var(--sans);font-weight:200;font-size:.95rem;color:#333028;margin-left:1.5rem;transition:transform .4s ease,color .3s;line-height:1;flex-shrink:0}
-.pr.open .pplus{transform:rotate(45deg);color:#7a7570}
+.hero-meta{
+  font-family: var(--mono);
+  font-size: .7rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink2);
+  opacity: .6;
+}
 
-.pb{max-height:0;overflow:hidden;transition:max-height .55s cubic-bezier(.4,0,.2,1)}
-.pr.open .pb{max-height:1500px}
-.pbi{padding:.3rem 3.2rem 2.4rem}
-.ptext{font-family:var(--serif);font-size:clamp(.92rem,1.3vw,1.1rem);font-weight:300;line-height:2.05;color:#a09b93;font-style:italic;white-space:pre-wrap}
+/* ─── SECTIONS ─────────────────────────────────────────────── */
+section{ padding: 6rem 3rem; }
 
-.empty{font-family:var(--sans);font-weight:300;font-size:.82rem;line-height:1.8;color:#4a4840;padding:2rem 0}
-.empty a{color:#7a7570;text-decoration:underline;text-underline-offset:3px}
+.slabel{
+  font-family: var(--mono);
+  font-size: .65rem;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 3.5rem;
+  display: flex; align-items: center; gap: 1.5rem;
+}
+.slabel::after{
+  content: '';
+  flex: 1; max-width: 80px;
+  height: 1px; background: var(--faint);
+}
 
-footer{background:var(--dark);border-top:1px solid #1a1814;padding:2rem 4rem}
-footer span{font-family:var(--sans);font-weight:200;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:#333028}
+/* ─── ABOUT ────────────────────────────────────────────────── */
+#about{ border-top: 2px double var(--faint); }
 
-.rev{opacity:0;transform:translateY(22px);transition:opacity .9s ease,transform .9s ease}
-.rev.v{opacity:1;transform:none}
+.ag{ display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: start; }
 
-@media(max-width:768px){
-  nav{padding:1.2rem 1.5rem}
-  .nav-links{display:none}
-  section{padding:4.5rem 1.5rem}
-  #hero{padding:0 1.5rem 4rem}
-  .hero-bg{font-size:44vw}
-  h1{font-size:clamp(2.8rem,11vw,4.5rem)}
-  .ag{grid-template-columns:1fr;gap:3rem}
-  footer{padding:1.5rem}
-  .pbi{padding:.3rem 0 2rem}
+.city{
+  font-family: var(--mono);
+  font-size: .65rem;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 1rem;
+}
+
+.alead{
+  font-family: var(--type);
+  font-size: clamp(1.4rem, 2.3vw, 1.9rem);
+  line-height: 1.5;
+  color: var(--ink);
+  text-shadow: 0 0 1px rgba(28,23,16,.15);
+}
+
+.atext{
+  font-family: var(--mono);
+  font-size: .82rem;
+  line-height: 1.95;
+  color: var(--ink2);
+}
+.atext p + p{ margin-top: 1rem; }
+
+/* ─── POEMS ────────────────────────────────────────────────── */
+#poems{
+  background: var(--paper2);
+  border-top: 2px double var(--faint);
+  border-bottom: 2px double var(--faint);
+}
+#poems .slabel{ color: var(--faint); }
+#poems .slabel::after{ background: var(--faint); }
+
+.filter-bar{
+  display: flex; align-items: center; gap: 2rem;
+  margin-bottom: 2.5rem; flex-wrap: wrap;
+}
+.fi{
+  background: transparent;
+  border: none; border-bottom: 1px solid var(--faint);
+  padding: .4rem 0;
+  font-family: var(--mono); font-size: .75rem;
+  letter-spacing: .08em;
+  color: var(--ink); outline: none;
+  width: min(220px, 100%);
+  transition: border-color .2s;
+}
+.fi::placeholder{ color: var(--faint); }
+.fi:focus{ border-color: var(--ink2); }
+.fc{
+  font-family: var(--mono);
+  font-size: .6rem; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--faint);
+}
+
+/* Год — как заголовок главы */
+.yg{ margin-bottom: .5rem; }
+.yh{
+  font-family: var(--mono);
+  font-size: .6rem; letter-spacing: .35em; text-transform: uppercase;
+  color: var(--faint);
+  padding: 1.6rem 0 .5rem;
+  border-top: 1px solid var(--faint);
+  display: flex; align-items: center; gap: 1rem;
+}
+.yh::after{ content: ''; flex: 1; height: 1px; background: var(--faint); }
+
+/* Строки стихов */
+.pr{
+  border-top: 1px solid rgba(180,160,120,.3);
+  overflow: hidden;
+}
+.pt{
+  display: flex; align-items: baseline;
+  padding: 1rem 0;
+  cursor: pointer; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pt:hover .ptitle,
+.pr.open .ptitle{ color: var(--ink); }
+
+.pnum{
+  font-family: var(--mono); font-size: .58rem;
+  letter-spacing: .1em; color: var(--faint);
+  width: 3rem; flex-shrink: 0;
+}
+.ptitle{
+  font-family: var(--type);
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  color: var(--ink2);
+  flex: 1;
+  transition: color .2s;
+  /* Лёгкий эффект печати */
+  text-shadow: 0 0 1px rgba(28,23,16,.12);
+}
+.pdate{
+  font-family: var(--mono); font-size: .58rem;
+  letter-spacing: .1em; color: var(--faint);
+  margin-left: 1.5rem; flex-shrink: 0;
+}
+.pplus{
+  font-family: var(--mono); font-size: .9rem;
+  color: var(--faint); margin-left: 1.2rem;
+  transition: transform .35s ease, color .2s;
+  line-height: 1; flex-shrink: 0;
+}
+.pr.open .pplus{ transform: rotate(45deg); color: var(--ink2); }
+
+/* Текст стихотворения */
+.pb{
+  max-height: 0; overflow: hidden;
+  transition: max-height .5s cubic-bezier(.4,0,.2,1);
+}
+.pr.open .pb{ max-height: 2000px; }
+.pbi{
+  padding: .5rem 0 2.5rem 3rem;
+  /* вертикальная красная линия слева — поля тетради */
+  border-left: 1px solid rgba(200,120,100,.25);
+  margin-left: .5rem;
+}
+.ptext{
+  font-family: var(--mono);
+  font-size: clamp(1rem, 1.3vw, 1.05rem);
+  line-height: 2.05;
+  color: var(--ink);
+  white-space: pre-wrap;
+  /* Имитация неравномерного удара клавиш */
+  text-shadow:
+    0 0 1px rgba(28,23,16,.2),
+    .3px 0 0 rgba(28,23,16,.06);
+}
+
+/* ─── EMPTY STATE ──────────────────────────────────────────── */
+.empty{
+  font-family: var(--mono);
+  font-size: .78rem; line-height: 2;
+  color: var(--ink2); padding: 4rem 0; text-align: center;
+  letter-spacing: .05em;
+}
+.empty strong{
+  font-family: var(--type);
+  color: var(--ink); display: block;
+  margin-bottom: .8rem;
+  font-size: 1.3rem; letter-spacing: .05em;
+}
+
+/* ─── FOOTER ───────────────────────────────────────────────── */
+footer{
+  padding: 2rem 3rem;
+  border-top: 1px solid var(--faint);
+  display: flex; justify-content: space-between; align-items: center;
+}
+footer span{
+  font-family: var(--mono);
+  font-size: .6rem; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--faint);
+}
+
+/* ─── АНИМАЦИИ ─────────────────────────────────────────────── */
+.rev{
+  opacity: 0; transform: translateY(16px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.rev.v{ opacity: 1; transform: none; }
+
+/* ─── МОБИЛЬНЫЙ ────────────────────────────────────────────── */
+@media(max-width: 640px){
+  nav{ padding: 1.1rem 1.4rem; }
+  .nav-links{ display: none; }
+  #hero{ padding: 0 1.4rem 3.5rem; }
+  section{ padding: 4rem 1.4rem; }
+  .ag{ grid-template-columns: 1fr; gap: 2.5rem; }
+  h1{ font-size: clamp(3rem, 14vw, 4.5rem); }
+  .hero-page{ font-size: 50vw; }
+  footer{ padding: 1.5rem 1.4rem; flex-direction: column; gap: .5rem; text-align: center; }
+  .pbi{ padding: .5rem 0 2rem 1.5rem; }
+  .pdate{ display: none; }
+  .pnum{ width: 2.4rem; }
 }
 </style>
 </head>
@@ -111,18 +377,20 @@ footer span{font-family:var(--sans);font-weight:200;font-size:.58rem;letter-spac
   </ul>
 </nav>
 
+<!-- HERO -->
 <section id="hero">
-  <div class="hero-bg" aria-hidden="true">АР</div>
+  <div class="hero-page" aria-hidden="true">АР</div>
   <div class="hero-c">
-    <div class="rule"></div>
-    <p class="eyebrow rev">Стихи</p>
-    <h1 class="rev" style="transition-delay:.1s">
+    <div class="hero-rule" data-label="стихи"></div>
+    <h1 class="rev">
       <span class="fn">Александр</span>
       <span class="ln">Рост</span>
     </h1>
+    <p class="hero-meta rev" style="transition-delay:.15s">Екатеринбург</p>
   </div>
 </section>
 
+<!-- ABOUT -->
 <section id="about">
   <p class="slabel">О поэте</p>
   <div class="ag">
@@ -131,85 +399,123 @@ footer span{font-family:var(--sans);font-weight:200;font-size:.58rem;letter-spac
       <p class="alead">Слово как действие.<br>Пауза как смысл.</p>
     </div>
     <div class="atext rev" style="transition-delay:.12s">
-      <p>Александр Рост — екатеринбургский поэт. Более 230 стихотворений, около 14 000 читателей.</p>
+      <p>Александр Рост — екатеринбургский поэт.</p>
       <p>В стихах — острая интонация, философская сжатость, работа с паузой и тем, что остаётся между строк.</p>
     </div>
   </div>
 </section>
 
+<!-- POEMS -->
 <section id="poems">
   <p class="slabel">Все стихи</p>
   <div class="filter-bar">
-    <input class="fi" type="text" id="si" placeholder="Поиск по названию…" autocomplete="off">
+    <input class="fi" type="text" id="si"
+      placeholder="поиск по названию..." autocomplete="off" spellcheck="false">
     <span class="fc" id="fc"></span>
   </div>
   <div id="pc"></div>
 </section>
 
 <footer>
-  <span>Александр Рост · Екатеринбург</span>
+  <span>Александр Рост</span>
+  <span>Екатеринбург</span>
 </footer>
 
 <script>
 // ── CURSOR ──
 const cur = document.getElementById('cur');
-document.addEventListener('mousemove', e => { cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px'; });
-const hOn=()=>cur.classList.add('h'), hOff=()=>cur.classList.remove('h');
-document.querySelectorAll('a').forEach(el=>{el.addEventListener('mouseenter',hOn);el.addEventListener('mouseleave',hOff)});
+if (window.matchMedia('(hover:hover)').matches) {
+  document.addEventListener('mousemove', e => {
+    cur.style.left = e.clientX + 'px';
+    cur.style.top  = e.clientY + 'px';
+  });
+  const hOn  = () => cur.classList.add('h');
+  const hOff = () => cur.classList.remove('h');
+  document.querySelectorAll('a').forEach(el => {
+    el.addEventListener('mouseenter', hOn);
+    el.addEventListener('mouseleave', hOff);
+  });
+  document.getElementById('pc').addEventListener('mouseover', e => { if (e.target.closest('.pt')) hOn(); });
+  document.getElementById('pc').addEventListener('mouseout',  e => { if (e.target.closest('.pt')) hOff(); });
+}
 
 // ── NAV ──
-const nav=document.getElementById('nav');
-window.addEventListener('scroll',()=>nav.classList.toggle('bg',scrollY>60));
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => nav.classList.toggle('bg', scrollY > 60), { passive: true });
 
 // ── REVEAL ──
-const rio=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('v')}),{threshold:.1});
-document.querySelectorAll('.rev').forEach(el=>rio.observe(el));
-setTimeout(()=>document.querySelectorAll('#hero .rev').forEach((el,i)=>setTimeout(()=>el.classList.add('v'),180+i*110)),80);
+const isMobile = window.innerWidth < 640;
+const rio = new IntersectionObserver(
+  es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('v'); }),
+  { threshold: 0, rootMargin: '0px 0px -30px 0px' }
+);
+document.querySelectorAll('.rev').forEach(el => {
+  isMobile ? setTimeout(() => el.classList.add('v'), 80) : rio.observe(el);
+});
+if (!isMobile) {
+  setTimeout(() =>
+    document.querySelectorAll('#hero .rev').forEach((el, i) =>
+      setTimeout(() => el.classList.add('v'), 200 + i * 130)
+    ), 80
+  );
+}
 
-// ── SORT by date desc ──
-function parseDate(d){ const [dd,mm,yyyy]=d.split('.');return new Date(+yyyy,+mm-1,+dd); }
-const sorted=[...POEMS].sort((a,b)=>parseDate(b.date)-parseDate(a.date));
+// ── ДАННЫЕ ──
+function parseDate(d) {
+  const [dd, mm, yyyy] = d.split('.');
+  return new Date(+yyyy, +mm - 1, +dd);
+}
 
-// ── BUILD ──
-function buildList(list){
-  const pc=document.getElementById('pc');
-  const fc=document.getElementById('fc');
-  fc.textContent=list.length+' стихотворений';
-  pc.innerHTML='';
-  if(!list.length){
-    pc.innerHTML='<p class="empty">Ничего не найдено</p>';
+const rawPoems = (typeof POEMS !== 'undefined' && Array.isArray(POEMS)) ? POEMS : [];
+const sorted = [...rawPoems].sort((a, b) => parseDate(b.date) - parseDate(a.date));
+
+// ── РЕНДЕР ──
+function buildList(list) {
+  const pc = document.getElementById('pc');
+  const fc = document.getElementById('fc');
+
+  if (rawPoems.length === 0) {
+    fc.textContent = '';
+    pc.innerHTML = `<div class="empty">
+      <strong>стихи не загружены</strong>
+      Запустите Action на GitHub:<br>
+      Actions → Update Poems &amp; Deploy → Run workflow
+    </div>`;
     return;
   }
-  if(POEMS.length===0){
-    pc.innerHTML=`<p class="empty">
-      Стихи ещё не загружены.<br>
-      Запустите <strong>fetch_poems.py</strong> чтобы заполнить базу,<br>
-      или добавьте стихи вручную в файл <strong>poems.js</strong>.
-    </p>`;
+
+  fc.textContent = list.length + '\u00a0стихотворений';
+  pc.innerHTML = '';
+  if (!list.length) {
+    pc.innerHTML = '<div class="empty">ничего не найдено</div>';
     return;
   }
-  const byYear={};
-  list.forEach((p,i)=>{
-    const y=p.date.split('.')[2];
-    if(!byYear[y])byYear[y]=[];
-    byYear[y].push({...p, n:sorted.indexOf(p)+1});
+
+  const byYear = {};
+  list.forEach(p => {
+    const y = p.date.split('.')[2];
+    if (!byYear[y]) byYear[y] = [];
+    byYear[y].push({ ...p, n: sorted.indexOf(p) + 1 });
   });
-  Object.keys(byYear).sort((a,b)=>b-a).forEach(year=>{
-    const yg=document.createElement('div');
-    yg.className='yg';
-    yg.innerHTML=`<div class="yh">${year}</div>`;
-    byYear[year].forEach(item=>{
-      const row=document.createElement('div');
-      row.className='pr';
-      row.innerHTML=`
+
+  Object.keys(byYear).sort((a, b) => b - a).forEach(year => {
+    const yg = document.createElement('div');
+    yg.className = 'yg';
+    yg.innerHTML = `<div class="yh">${year}</div>`;
+    byYear[year].forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'pr';
+      const safe = (item.text || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      row.innerHTML = `
         <div class="pt" onclick="toggle(this.closest('.pr'))">
           <span class="pnum">${String(item.n).padStart(3,'0')}</span>
-          <span class="ptitle">${item.title||'—'}</span>
+          <span class="ptitle">${item.title || '—'}</span>
           <span class="pdate">${item.date}</span>
           <span class="pplus" aria-hidden="true">+</span>
         </div>
         <div class="pb"><div class="pbi">
-          <div class="ptext">${(item.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          <div class="ptext">${safe}</div>
         </div></div>`;
       yg.appendChild(row);
     });
@@ -217,25 +523,20 @@ function buildList(list){
   });
 }
 
-function toggle(row){
-  const wasOpen=row.classList.contains('open');
-  document.querySelectorAll('.pr.open').forEach(r=>r.classList.remove('open'));
-  if(!wasOpen)row.classList.add('open');
+function toggle(row) {
+  const was = row.classList.contains('open');
+  document.querySelectorAll('.pr.open').forEach(r => r.classList.remove('open'));
+  if (!was) row.classList.add('open');
 }
 
-// ── SEARCH ──
 let timer;
-document.getElementById('si').addEventListener('input',function(){
+document.getElementById('si').addEventListener('input', function() {
   clearTimeout(timer);
-  timer=setTimeout(()=>{
-    const q=this.value.toLowerCase().trim();
-    buildList(q?sorted.filter(p=>(p.title||'').toLowerCase().includes(q)||(p.date||'').includes(q)):sorted);
-  },200);
+  timer = setTimeout(() => {
+    const q = this.value.toLowerCase().trim();
+    buildList(q ? sorted.filter(p => (p.title||'').toLowerCase().includes(q)) : sorted);
+  }, 200);
 });
-
-// ── HOVER cursor for dynamic rows ──
-document.getElementById('pc').addEventListener('mouseover',e=>{if(e.target.closest('.pt'))hOn()});
-document.getElementById('pc').addEventListener('mouseout',e=>{if(e.target.closest('.pt'))hOff()});
 
 buildList(sorted);
 </script>
