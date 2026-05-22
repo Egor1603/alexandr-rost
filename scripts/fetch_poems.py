@@ -125,12 +125,24 @@ async def parse_poem(page, path: str) -> dict:
         const div = document.createElement('div');
         div.innerHTML = slice
             .replace(/<br\\s*\\/?>/gi, '\\n')
+            .replace(/<p[^>]*>/gi, '\\n')
+            .replace(/<\\/p>/gi, '\\n')
             .replace(/<[^>]+>/g, '');
 
         return div.textContent
             .split('\\n')
             .map(l => l.trim())
-            .join('\\n')
+            // Склеиваем: пустая строка → двойной перенос (граница строфы)
+            .reduce((acc, line) => {
+                if (line === '') {
+                    // Добавляем двойной перенос только если последний символ не уже \n\n
+                    if (acc && !acc.endsWith('\\n\\n')) acc += '\\n\\n';
+                } else {
+                    if (acc && !acc.endsWith('\\n')) acc += '\\n';
+                    acc += line;
+                }
+                return acc;
+            }, '')
             .replace(/\\n{3,}/g, '\\n\\n')
             .trim();
     }""")
